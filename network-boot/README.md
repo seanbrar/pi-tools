@@ -16,22 +16,32 @@ This script helps set up a Raspberry Pi as a network boot server. It handles the
 
 1. Download the bootstrap script:
 ```bash
+# Option 1: Latest version (might be cached)
 curl -O https://raw.githubusercontent.com/seanbrar/pi-tools/main/network-boot/bootstrap.sh
-chmod +x bootstrap.sh
+
+# Option 2: Force latest version (recommended)
+curl -O "https://raw.githubusercontent.com/seanbrar/pi-tools/main/network-boot/bootstrap.sh?$(date +%s)"
 ```
 
 2. Run the script with sudo:
 ```bash
+# Option 1: Enter repo URL when prompted
 sudo ./bootstrap.sh
+
+# Option 2: Set repo URL via environment variable
+export NETWORK_BOOT_REPO="git@github.com:username/repo.git"
+sudo -E ./bootstrap.sh
 ```
 
 3. Follow the prompts to:
-   - Select environment type (development/production)
-   - Enter network configuration (IP address, gateway, netmask)
-   - Provide your GitHub repository URL
    - Add the generated SSH key to your GitHub account
+   - Enter your GitHub repository URL (if not set via environment variable)
+   - Enter network configuration (IP address, gateway, netmask)
 
-The script will set up your Pi with the specified configuration and run the Ansible playbook to complete the setup.
+The script will:
+1. Set up SSH authentication with GitHub
+2. Clone your private repository
+3. Run the Ansible playbook to complete the setup
 
 ## Note
 
