@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# Add debug mode
+DEBUG=0
+while getopts "d" opt; do
+    case $opt in
+        d) DEBUG=1 ;;
+    esac
+done
+
+# Debug function
+debug() {
+    if [ "$DEBUG" -eq 1 ]; then
+        echo "DEBUG: $*" >&2
+    fi
+}
+
 set -euo pipefail
 IFS=$'\n\t'
 
@@ -167,16 +182,22 @@ read -r
 
 # Test SSH connection to GitHub
 echo "Testing GitHub SSH connection..."
-# First ensure github.com is in known_hosts
+debug "Adding GitHub's host key..."
 ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
 
-# Now test the connection
-if ssh -T git@github.com 2>&1 | grep -q "successfully authenticated\|Hi.*You've successfully authenticated"; then
+debug "Testing SSH connection..."
+SSH_OUTPUT=$(ssh -T git@github.com 2>&1)
+debug "SSH output: $SSH_OUTPUT"
+
+if echo "$SSH_OUTPUT" | grep -q "successfully authenticated\|Hi.*You've successfully authenticated"; then
+    debug "Found success pattern in SSH output"
     echo "Successfully authenticated with GitHub!"
 else
+    debug "Failed to find success pattern in SSH output"
+    debug "grep patterns: 'successfully authenticated' or 'Hi.*You've successfully authenticated'"
     echo "Error: Unable to authenticate with GitHub"
     echo "Debug output:"
-    ssh -T git@github.com 2>&1
+    echo "$SSH_OUTPUT"
     rm -f "$VARS_FILE"
     exit 1
 fi
