@@ -17,7 +17,7 @@ This script helps set up a Raspberry Pi as a network boot server. It handles the
 
 1. Download the bootstrap script:
 ```bash
-curl -O https://raw.githubusercontent.com/yourusername/yourrepo/main/bootstrap.sh
+curl -O https://raw.githubusercontent.com/seanbrar/pi-tools/main/network-boot/bootstrap.sh
 chmod +x bootstrap.sh
 ```
 
