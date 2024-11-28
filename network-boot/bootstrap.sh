@@ -211,14 +211,15 @@ mkdir -p "$BASE_DIR/tftp/data/nfs/debian"
 mkdir -p "$BASE_DIR/tftp/data/nfs/pios"
 
 # Clone or update the repo
-REPO_DIR=$(basename "$REPO_URL" .git)
+REPO_DIR="$BASE_DIR/repo"
+echo "Cloning repository into $REPO_DIR..."
 if [ -d "$REPO_DIR" ]; then
     echo "Repository directory already exists. Updating..."
     cd "$REPO_DIR"
     git pull
 else
     echo "Cloning repository..."
-    git clone "$REPO_URL"
+    git clone "$REPO_URL" "$REPO_DIR"
     cd "$REPO_DIR"
 fi
 
@@ -226,10 +227,13 @@ fi
 PLAYBOOK_PATH="ansible/playbooks/setup-pi.yml"
 if [ -f "$PLAYBOOK_PATH" ]; then
     echo "Running Ansible playbook..."
-    ansible-playbook "$PLAYBOOK_PATH" -e "@$VARS_FILE"
+    debug "Running from directory: $(pwd)"
+    debug "Playbook path: $PLAYBOOK_PATH"
+    debug "Template path: ansible/templates/"
+    ansible-playbook "$PLAYBOOK_PATH" -i "$INVENTORY_FILE" -e "@$VARS_FILE"
 else
     echo "Error: Ansible playbook not found at: $PLAYBOOK_PATH"
-    rm -f "$VARS_FILE"
+    rm -f "$VARS_FILE" "$INVENTORY_FILE"
     exit 1
 fi
 
