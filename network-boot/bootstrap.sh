@@ -31,7 +31,7 @@ MISSING_PACKAGES=()
 
 echo "Checking for required packages..."
 for package in "${REQUIRED_PACKAGES[@]}"; do
-    if ! dpkg -l | grep -q "^ii[[:space:]]*${package}[[:space:]]"; then
+    if ! dpkg-query -W -f='${Status}' $package 2>/dev/null | grep -q "install ok installed"; then
         MISSING_PACKAGES+=("$package")
     fi
 done
@@ -75,32 +75,43 @@ for port in "${REQUIRED_PORTS[@]}"; do
     fi
 done
 
-# Get IP configuration
-read -r -p "Enter IP address for this Pi: " PI_IP
-read -r -p "Enter network gateway: " GATEWAY
-read -r -p "Enter netmask [255.255.255.0]: " NETMASK
-NETMASK=${NETMASK:-255.255.255.0}
-
-# Validate IP addresses
+# IP Address Validation
 validate_ip() {
     local ip=$1
-    if [[ ! $ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-        return 1
+    local stat=1
+
+    if [[ $ip =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+        OIFS=$IFS
+        IFS='.'
+        ip=($ip)
+        IFS=$OIFS
+        [[ ${ip[0]} -le 255 && ${ip[1]} -le 255 && ${ip[2]} -le 255 && ${ip[3]} -le 255 ]]
+        stat=$?
     fi
-    for octet in $(echo "$ip" | tr '.' ' '); do
-        if [[ $octet -lt 0 || $octet -gt 255 ]]; then
-            return 1
-        fi
-    done
-    return 0
+    return $stat
 }
 
-for ip in "$PI_IP" "$GATEWAY" "$NETMASK"; do
-    if ! validate_ip "$ip"; then
-        echo "Invalid IP address format: $ip"
-        exit 1
-    fi
-done
+echo "Enter IP address for this Pi: "
+read ip_address
+if ! validate_ip $ip_address; then
+    echo "Invalid IP address format."
+    exit 1
+fi
+
+echo "Enter network gateway: "
+read gateway
+if ! validate_ip $gateway; then
+    echo "Invalid gateway format."
+    exit 1
+fi
+
+echo "Enter netmask [255.255.255.0]: "
+read netmask
+netmask=${netmask:-"255.255.255.0"}  # Use default if empty
+if ! validate_ip $netmask; then
+    echo "Invalid netmask format."
+    exit 1
+fi
 
 # Prompt for repo URL with validation
 while true; do
@@ -129,10 +140,10 @@ esac
 VARS_FILE=$(mktemp)
 cat > "$VARS_FILE" << EOF
 network:
-  ip: "${PI_IP}"
+  ip: "${ip_address}"
   hostname: "${HOSTNAME}${HOSTNAME_SUFFIX}"
-  netmask: "${NETMASK}"
-  gateway: "${GATEWAY}"
+  netmask: "${netmask}"
+  gateway: "${gateway}"
 EOF
 
 # Ensure .ssh directory exists with correct permissions
@@ -208,6 +219,6 @@ fi
 
 # Final network check
 echo "Checking network configuration..."
-ip addr show | grep -q "$PI_IP" || echo "Warning: Expected IP address not found"
+ip addr show | grep -q "$ip_address" || echo "Warning: Expected IP address not found"
 
 echo "Bootstrap complete! Please verify your network configuration."
