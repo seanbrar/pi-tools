@@ -31,7 +31,7 @@ MISSING_PACKAGES=()
 
 echo "Checking for required packages..."
 for package in "${REQUIRED_PACKAGES[@]}"; do
-    if ! dpkg -l | grep -q "^ii.*${package}[[:space:]]"; then
+    if ! dpkg -l | grep -q "^ii[[:space:]]*${package}[[:space:]]"; then
         MISSING_PACKAGES+=("$package")
     fi
 done
@@ -61,9 +61,17 @@ done
 
 # Check if ports are available
 for port in "${REQUIRED_PORTS[@]}"; do
-    if netstat -tuln | grep ":${port} " | grep -qv "127.0.0.1"; then
-        echo "Error: Port $port is already in use on external interfaces"
-        exit 1
+    echo "Checking port $port..."
+    if [ "$port" = "2049" ] || [ "$port" = "111" ]; then
+        if ! netstat -tuln | grep -q ":${port}.*LISTEN"; then
+            echo "Error: NFS port $port is not listening as expected"
+            exit 1
+        fi
+    else
+        if netstat -tuln | grep ":${port} " | grep -qv "127.0.0.1"; then
+            echo "Error: Port $port is already in use on external interfaces"
+            exit 1
+        fi
     fi
 done
 
