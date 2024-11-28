@@ -167,8 +167,14 @@ read -r
 
 # Test SSH connection to GitHub
 echo "Testing GitHub SSH connection..."
-if ! ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
+# First ensure github.com is in known_hosts
+ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
+
+# Now test the connection
+if ! ssh -T git@github.com 2>&1 | grep -q "successfully authenticated\|Hi.*You've successfully authenticated"; then
     echo "Error: Unable to authenticate with GitHub"
+    echo "Debug output:"
+    ssh -T git@github.com 2>&1
     rm -f "$VARS_FILE"
     exit 1
 fi
