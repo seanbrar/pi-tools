@@ -25,11 +25,36 @@ if [ "$AVAILABLE_SPACE" -lt "$REQUIRED_SPACE_GB" ]; then
     exit 1
 fi
 
-# Check for required commands
-REQUIRED_COMMANDS=("git" "ssh-keygen" "ansible-playbook" "exportfs")
+# Package management
+REQUIRED_PACKAGES=("git" "ansible" "nfs-kernel-server" "openssh-client")
+MISSING_PACKAGES=()
+
+echo "Checking for required packages..."
+for package in "${REQUIRED_PACKAGES[@]}"; do
+    if ! dpkg -l | grep -q "^ii  $package "; then
+        MISSING_PACKAGES+=("$package")
+    fi
+done
+
+if [ ${#MISSING_PACKAGES[@]} -ne 0 ]; then
+    echo "The following required packages are missing:"
+    printf '%s\n' "${MISSING_PACKAGES[@]}"
+    
+    read -r -p "Would you like to install them now? [y/N] " response
+    if [[ "$response" =~ ^[Yy] ]]; then
+        apt-get update
+        apt-get install -y "${MISSING_PACKAGES[@]}"
+    else
+        echo "Cannot continue without required packages."
+        exit 1
+    fi
+fi
+
+# Check for required commands (simplified since we're checking packages)
+REQUIRED_COMMANDS=("ssh-keygen" "ansible-playbook" "exportfs")
 for cmd in "${REQUIRED_COMMANDS[@]}"; do
     if ! command -v "$cmd" >/dev/null 2>&1; then
-        echo "Error: Required command '$cmd' not found"
+        echo "Error: Required command '$cmd' not found even after package installation"
         exit 1
     fi
 done
