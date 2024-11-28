@@ -171,7 +171,9 @@ echo "Testing GitHub SSH connection..."
 ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
 
 # Now test the connection
-if ! ssh -T git@github.com 2>&1 | grep -q "successfully authenticated\|Hi.*You've successfully authenticated"; then
+if ssh -T git@github.com 2>&1 | grep -q "successfully authenticated\|Hi.*You've successfully authenticated"; then
+    echo "Successfully authenticated with GitHub!"
+else
     echo "Error: Unable to authenticate with GitHub"
     echo "Debug output:"
     ssh -T git@github.com 2>&1
