@@ -186,7 +186,9 @@ debug "Adding GitHub's host key..."
 ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
 
 debug "Testing SSH connection..."
-SSH_OUTPUT=$(ssh -T git@github.com 2>&1)
+if ! SSH_OUTPUT=$(ssh -T git@github.com 2>&1); then
+    debug "SSH command failed with exit code: $?"
+fi
 debug "SSH output: $SSH_OUTPUT"
 
 if echo "$SSH_OUTPUT" | grep -q "successfully authenticated\|Hi.*You've successfully authenticated"; then
@@ -194,10 +196,10 @@ if echo "$SSH_OUTPUT" | grep -q "successfully authenticated\|Hi.*You've successf
     echo "Successfully authenticated with GitHub!"
 else
     debug "Failed to find success pattern in SSH output"
+    debug "Full SSH output: $SSH_OUTPUT"
     debug "grep patterns: 'successfully authenticated' or 'Hi.*You've successfully authenticated'"
     echo "Error: Unable to authenticate with GitHub"
-    echo "Debug output:"
-    echo "$SSH_OUTPUT"
+    echo "Please verify your SSH key has been added correctly to GitHub"
     rm -f "$VARS_FILE"
     exit 1
 fi
