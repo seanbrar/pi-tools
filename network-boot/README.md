@@ -9,7 +9,6 @@ This script helps set up a Raspberry Pi as a network boot server. It handles the
 - The following packages installed:
   - git
   - ansible
-  - docker
   - nfs-kernel-server
   - ssh
 

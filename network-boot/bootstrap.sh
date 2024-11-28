@@ -26,7 +26,7 @@ if [ "$AVAILABLE_SPACE" -lt "$REQUIRED_SPACE_GB" ]; then
 fi
 
 # Check for required commands
-REQUIRED_COMMANDS=("git" "ssh-keygen" "ansible-playbook" "docker" "exportfs")
+REQUIRED_COMMANDS=("git" "ssh-keygen" "ansible-playbook" "exportfs")
 for cmd in "${REQUIRED_COMMANDS[@]}"; do
     if ! command -v "$cmd" >/dev/null 2>&1; then
         echo "Error: Required command '$cmd' not found"
