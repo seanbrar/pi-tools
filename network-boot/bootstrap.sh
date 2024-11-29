@@ -57,11 +57,9 @@ if [ -d "$REPO_DIR" ]; then
     mv "$REPO_DIR" "${REPO_DIR}.bak.$(date +%s)"
 fi
 
-# Create and set permissions on the parent directory
+# Create and set permissions on directories
 mkdir -p "/opt/network-boot"
 chown ${REAL_USER}:${REAL_USER} "/opt/network-boot"
-
-# Create and set permissions on the repo directory
 mkdir -p "$REPO_DIR"
 chown ${REAL_USER}:${REAL_USER} "$REPO_DIR"
 
@@ -73,6 +71,9 @@ if ! sudo -E -u ${REAL_USER} git clone "$REPO_URL" "$REPO_DIR"; then
     echo "4. Test your GitHub SSH access: ssh -T git@github.com"
     exit 1
 fi
+
+# Change to repo directory for Ansible operations
+cd "$REPO_DIR"
 
 # Setup inventory
 echo "Setting up Ansible inventory..."
