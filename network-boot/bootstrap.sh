@@ -85,9 +85,13 @@ if [ -z "$IP_ADDR" ]; then
     read -p "Enter IP address for this Pi: " IP_ADDR
 fi
 
+# Get current username for Ansible
+ANSIBLE_USER="${REAL_USER}"
+
 # Update inventory file with actual values
 sed -i "s/192.168.2.X/$IP_ADDR/" ansible/inventory/hosts
 sed -i "s/network-boot-01.example/$(hostname)/" ansible/inventory/hosts
+sed -i "s/your_username/$ANSIBLE_USER/" ansible/inventory/hosts
 
 # Run the playbook
 echo "Running Ansible playbook..."
