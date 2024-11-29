@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Check if running as root
 if [ "$EUID" -ne 0 ]; then 
-    echo "Please run with sudo"
+    echo "Please run with sudo -E"
     exit 1
 fi
 
@@ -22,6 +22,7 @@ chown ${REAL_USER}:${REAL_USER} "${REAL_HOME}/.ssh"
 
 # Generate SSH key if it doesn't exist
 if [ ! -f "${REAL_HOME}/.ssh/id_ed25519" ]; then
+    echo "Generating new SSH key..."
     ssh-keygen -t ed25519 -C "${REAL_USER}@$(hostname)" -N "" -f "${REAL_HOME}/.ssh/id_ed25519"
     chmod 600 "${REAL_HOME}/.ssh/id_ed25519"
     chmod 644 "${REAL_HOME}/.ssh/id_ed25519.pub"
@@ -37,12 +38,14 @@ read -r
 
 # Test SSH connection to GitHub
 echo "Testing SSH connection to GitHub..."
-if ! sudo -u ${REAL_USER} ssh -T git@github.com 2>&1 | grep -q "successfully authenticated\|Hi.*You've successfully authenticated"; then
-    echo "Error: Unable to authenticate with GitHub"
-    echo "Make sure you've:"
-    echo "  1. Completed the prerequisite SSH setup"
-    echo "  2. Added the SSH key to your GitHub account"
-    echo "  3. Run the script with 'sudo -E'"
+TEST_CMD="ssh -T git@github.com"
+if ! sudo -E -u ${REAL_USER} ${TEST_CMD}; then
+    echo "Failed to authenticate with GitHub. Let's test manually:"
+    echo "1. Open a new terminal"
+    echo "2. Run: ${TEST_CMD}"
+    echo "3. If it asks about host authenticity, type 'yes'"
+    echo "4. You should see a message like 'Hi username! You've successfully authenticated'"
+    echo "5. Then run this script again"
     exit 1
 fi
 
@@ -55,14 +58,25 @@ fi
 # Validate repo URL format
 if ! echo "$REPO_URL" | grep -qE '^git@github\.com:.+/.+\.git$'; then
     echo "Error: Invalid repository URL format"
+    echo "Expected format: git@github.com:username/repo.git"
     exit 1
 fi
 
 # Clone the repo
 REPO_DIR="/opt/network-boot/repo"
+echo "Cloning repository to ${REPO_DIR}..."
+if [ -d "$REPO_DIR" ]; then
+    echo "Repository directory already exists. Backing up..."
+    mv "$REPO_DIR" "${REPO_DIR}.bak.$(date +%s)"
+fi
 mkdir -p "$REPO_DIR"
-git clone "$REPO_URL" "$REPO_DIR"
-cd "$REPO_DIR"
+if ! sudo -E -u ${REAL_USER} git clone "$REPO_URL" "$REPO_DIR"; then
+    echo "Failed to clone repository. Please check:"
+    echo "1. The repository URL is correct"
+    echo "2. You have access to the repository"
+    echo "3. Your SSH key is properly set up"
+    exit 1
+fi
 
 # Setup inventory
 echo "Setting up Ansible inventory..."
