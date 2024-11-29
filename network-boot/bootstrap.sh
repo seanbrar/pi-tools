@@ -13,7 +13,7 @@ REAL_HOME=$(eval echo ~${REAL_USER})
 
 # Install required packages
 apt update
-apt install -y ansible git
+apt install -y ansible git sshpass
 
 # Ensure .ssh directory exists with correct permissions
 mkdir -p "${REAL_HOME}/.ssh"
