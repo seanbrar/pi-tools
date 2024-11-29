@@ -81,6 +81,14 @@ if [ ! -f "${SSH_KEY_FILE}" ]; then
     chmod 600 "${REAL_HOME}/.ssh/authorized_keys"
 fi
 
+# Start SSH agent and add key
+eval $(ssh-agent)
+ssh-add "${SSH_KEY_FILE}"
+
+# Test SSH connection
+echo "Testing SSH connection..."
+ssh -i "${SSH_KEY_FILE}" -o StrictHostKeyChecking=no ${REAL_USER}@localhost echo "SSH key authentication successful"
+
 # Configure passwordless sudo for the user
 SUDOERS_FILE="/etc/sudoers.d/ansible-user"
 if [ ! -f "${SUDOERS_FILE}" ]; then
