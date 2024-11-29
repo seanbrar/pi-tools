@@ -35,11 +35,13 @@ echo -e "\nGo to: https://github.com/settings/ssh/new"
 echo -e "\nPress Enter after adding the key to GitHub..."
 read -r
 
-# Test SSH connection to GitHub
-ssh-keyscan github.com >> "${REAL_HOME}/.ssh/known_hosts" 2>/dev/null
-chown ${REAL_USER}:${REAL_USER} "${REAL_HOME}/.ssh/known_hosts"
+# Test SSH connection to GitHub (assuming known_hosts is already set up)
+echo "Testing SSH connection to GitHub..."
 if ! sudo -u ${REAL_USER} ssh -T git@github.com 2>&1 | grep -q "successfully authenticated\|Hi.*You've successfully authenticated"; then
     echo "Error: Unable to authenticate with GitHub"
+    echo "Make sure you've:"
+    echo "  1. Completed the prerequisite SSH setup"
+    echo "  2. Added the SSH key to your GitHub account"
     exit 1
 fi
 
