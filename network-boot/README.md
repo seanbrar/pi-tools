@@ -31,10 +31,10 @@ curl -O "https://raw.githubusercontent.com/seanbrar/pi-tools/main/network-boot/b
 chmod +x bootstrap.sh
 ```
 
-2. Run the script with sudo:
+2. Run the script:
 ```bash
 # Option 1: Enter repo URL when prompted
-sudo ./bootstrap.sh
+sudo -E ./bootstrap.sh
 
 # Option 2: Set repo URL via environment variable
 export NETWORK_BOOT_REPO="git@github.com:username/repo.git"
