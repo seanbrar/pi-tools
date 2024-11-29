@@ -93,6 +93,9 @@ sed -i "s/192.168.2.X/$IP_ADDR/" ansible/inventory/hosts
 sed -i "s/network-boot-01.example/$(hostname)/" ansible/inventory/hosts
 sed -i "s/your_username/$ANSIBLE_USER/" ansible/inventory/hosts
 
-# Run the playbook
+# Run the playbook with password prompts
 echo "Running Ansible playbook..."
-ansible-playbook -i ansible/inventory/hosts ansible/playbooks/setup-pi.yml
+echo "You will be prompted for:"
+echo "1. SSH password (your maintainer user password)"
+echo "2. BECOME password (your sudo password, usually the same - just press Enter)"
+ansible-playbook -i ansible/inventory/hosts ansible/playbooks/setup-pi.yml -k -K
