@@ -7,6 +7,10 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+# Install required packages
+apt update
+apt install -y ansible git
+
 # Ensure .ssh directory exists with correct permissions
 mkdir -p ~/.ssh
 chmod 700 ~/.ssh
@@ -50,5 +54,20 @@ mkdir -p "$REPO_DIR"
 git clone "$REPO_URL" "$REPO_DIR"
 cd "$REPO_DIR"
 
+# Setup inventory
+echo "Setting up Ansible inventory..."
+cp ansible/inventory/example ansible/inventory/hosts
+
+# Get IP address
+IP_ADDR=$(ip -4 addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+if [ -z "$IP_ADDR" ]; then
+    read -p "Enter IP address for this Pi: " IP_ADDR
+fi
+
+# Update inventory file with actual values
+sed -i "s/192.168.2.X/$IP_ADDR/" ansible/inventory/hosts
+sed -i "s/network-boot-01.example/$(hostname)/" ansible/inventory/hosts
+
 # Run the playbook
-ansible-playbook ansible/playbooks/setup-pi.yml
+echo "Running Ansible playbook..."
+ansible-playbook -i ansible/inventory/hosts ansible/playbooks/setup-pi.yml
