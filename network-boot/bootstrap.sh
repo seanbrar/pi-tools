@@ -7,31 +7,38 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+# Get the actual user (even when running with sudo)
+REAL_USER=$(logname || who am i | awk '{print $1}')
+REAL_HOME=$(eval echo ~${REAL_USER})
+
 # Install required packages
 apt update
 apt install -y ansible git
 
 # Ensure .ssh directory exists with correct permissions
-mkdir -p ~/.ssh
-chmod 700 ~/.ssh
+mkdir -p "${REAL_HOME}/.ssh"
+chmod 700 "${REAL_HOME}/.ssh"
+chown ${REAL_USER}:${REAL_USER} "${REAL_HOME}/.ssh"
 
 # Generate SSH key if it doesn't exist
-if [ ! -f ~/.ssh/id_ed25519 ]; then
-    ssh-keygen -t ed25519 -C "$(whoami)@$(hostname)" -N "" -f ~/.ssh/id_ed25519
-    chmod 600 ~/.ssh/id_ed25519
-    chmod 644 ~/.ssh/id_ed25519.pub
+if [ ! -f "${REAL_HOME}/.ssh/id_ed25519" ]; then
+    ssh-keygen -t ed25519 -C "${REAL_USER}@$(hostname)" -N "" -f "${REAL_HOME}/.ssh/id_ed25519"
+    chmod 600 "${REAL_HOME}/.ssh/id_ed25519"
+    chmod 644 "${REAL_HOME}/.ssh/id_ed25519.pub"
+    chown ${REAL_USER}:${REAL_USER} "${REAL_HOME}/.ssh/id_ed25519"*
 fi
 
 # Display the public key and instructions
 echo -e "\nAdd this public key to GitHub:"
-cat ~/.ssh/id_ed25519.pub
+cat "${REAL_HOME}/.ssh/id_ed25519.pub"
 echo -e "\nGo to: https://github.com/settings/ssh/new"
 echo -e "\nPress Enter after adding the key to GitHub..."
 read -r
 
 # Test SSH connection to GitHub
-ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
-if ! ssh -T git@github.com 2>&1 | grep -q "successfully authenticated\|Hi.*You've successfully authenticated"; then
+ssh-keyscan github.com >> "${REAL_HOME}/.ssh/known_hosts" 2>/dev/null
+chown ${REAL_USER}:${REAL_USER} "${REAL_HOME}/.ssh/known_hosts"
+if ! sudo -u ${REAL_USER} ssh -T git@github.com 2>&1 | grep -q "successfully authenticated\|Hi.*You've successfully authenticated"; then
     echo "Error: Unable to authenticate with GitHub"
     exit 1
 fi
