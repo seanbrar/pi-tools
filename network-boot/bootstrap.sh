@@ -38,11 +38,10 @@ read -r
 
 # Test SSH connection to GitHub
 echo "Testing SSH connection to GitHub..."
-TEST_CMD="ssh -T git@github.com"
-if ! sudo -E -u ${REAL_USER} ${TEST_CMD}; then
+if ! sudo -E -u ${REAL_USER} ssh -T git@github.com 2>&1 | grep -q "successfully authenticated\|Hi.*You've successfully authenticated"; then
     echo "Failed to authenticate with GitHub. Let's test manually:"
     echo "1. Open a new terminal"
-    echo "2. Run: ${TEST_CMD}"
+    echo "2. Run: ssh -T git@github.com"
     echo "3. If it asks about host authenticity, type 'yes'"
     echo "4. You should see a message like 'Hi username! You've successfully authenticated'"
     echo "5. Then run this script again"
