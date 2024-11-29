@@ -56,7 +56,14 @@ if [ -d "$REPO_DIR" ]; then
     echo "Repository directory already exists. Backing up..."
     mv "$REPO_DIR" "${REPO_DIR}.bak.$(date +%s)"
 fi
+
+# Create and set permissions on the parent directory
+mkdir -p "/opt/network-boot"
+chown ${REAL_USER}:${REAL_USER} "/opt/network-boot"
+
+# Create and set permissions on the repo directory
 mkdir -p "$REPO_DIR"
+chown ${REAL_USER}:${REAL_USER} "$REPO_DIR"
 
 if ! sudo -E -u ${REAL_USER} git clone "$REPO_URL" "$REPO_DIR"; then
     echo "Failed to clone repository. Please check:"
