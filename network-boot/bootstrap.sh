@@ -72,8 +72,22 @@ if ! sudo -E -u ${REAL_USER} git clone "$REPO_URL" "$REPO_DIR"; then
     exit 1
 fi
 
-# Change to repo directory for Ansible operations
-cd "$REPO_DIR"
+# Setup SSH key for local Ansible operations
+SSH_KEY_FILE="${REAL_HOME}/.ssh/ansible_local"
+if [ ! -f "${SSH_KEY_FILE}" ]; then
+    echo "Generating SSH key for Ansible..."
+    sudo -u ${REAL_USER} ssh-keygen -t ed25519 -f "${SSH_KEY_FILE}" -N "" -C "ansible-local-${HOSTNAME}"
+    sudo -u ${REAL_USER} cat "${SSH_KEY_FILE}.pub" >> "${REAL_HOME}/.ssh/authorized_keys"
+    chmod 600 "${REAL_HOME}/.ssh/authorized_keys"
+fi
+
+# Configure passwordless sudo for the user
+SUDOERS_FILE="/etc/sudoers.d/ansible-user"
+if [ ! -f "${SUDOERS_FILE}" ]; then
+    echo "Configuring passwordless sudo..."
+    echo "${REAL_USER} ALL=(ALL) NOPASSWD: ALL" > "${SUDOERS_FILE}"
+    chmod 440 "${SUDOERS_FILE}"
+fi
 
 # Setup inventory
 echo "Setting up Ansible inventory..."
@@ -92,10 +106,19 @@ ANSIBLE_USER="${REAL_USER}"
 sed -i "s/192.168.2.X/$IP_ADDR/" ansible/inventory/hosts
 sed -i "s/network-boot-01.example/$(hostname)/" ansible/inventory/hosts
 sed -i "s/your_username/$ANSIBLE_USER/" ansible/inventory/hosts
+sed -i "s|~/.ssh/ansible_local|${SSH_KEY_FILE}|" ansible/inventory/hosts
 
-# Run the playbook with password prompts
+# Setup Ansible temp directory
+ANSIBLE_TMP="/tmp/.ansible-${REAL_USER}"
+mkdir -p "${ANSIBLE_TMP}/tmp"
+chown -R ${REAL_USER}:${REAL_USER} "${ANSIBLE_TMP}"
+chmod -R 700 "${ANSIBLE_TMP}"
+
+# Set Ansible temp directory environment variables
+export ANSIBLE_REMOTE_TMP="/tmp/.ansible-${REAL_USER}/tmp"
+export ANSIBLE_LOCAL_TMP="/tmp/.ansible-${REAL_USER}/tmp"
+
+# Run the playbook
 echo "Running Ansible playbook..."
-echo "You will be prompted for:"
-echo "1. SSH password (your maintainer user password)"
-echo "2. BECOME password (your sudo password, usually the same - just press Enter)"
-ansible-playbook -i ansible/inventory/hosts ansible/playbooks/setup-pi.yml -k -K
+cd "$REPO_DIR"
+ansible-playbook -i ansible/inventory/hosts ansible/playbooks/setup-pi.yml
