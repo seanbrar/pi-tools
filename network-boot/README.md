@@ -9,6 +9,13 @@ This script helps set up a Raspberry Pi as a network boot server. It handles the
 - The following packages installed:
   - git
   - ansible
+- GitHub SSH setup:
+  ```bash
+  # Verify GitHub's host key (one-time step)
+  ssh -T git@github.com
+  # Type 'yes' when prompted
+  # You'll see "Permission denied (publickey)" - this is expected
+  ```
 
 Note: Additional packages (nfs-kernel-server, docker.io, etc.) will be installed automatically by the Ansible playbook.
 
