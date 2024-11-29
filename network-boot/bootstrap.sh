@@ -36,18 +36,6 @@ echo -e "\nGo to: https://github.com/settings/ssh/new"
 echo -e "\nPress Enter after adding the key to GitHub..."
 read -r
 
-# Test SSH connection to GitHub
-echo "Testing SSH connection to GitHub..."
-if ! sudo -E -u ${REAL_USER} ssh -T git@github.com 2>&1 | grep -q "successfully authenticated\|Hi.*You've successfully authenticated"; then
-    echo "Failed to authenticate with GitHub. Let's test manually:"
-    echo "1. Open a new terminal"
-    echo "2. Run: ssh -T git@github.com"
-    echo "3. If it asks about host authenticity, type 'yes'"
-    echo "4. You should see a message like 'Hi username! You've successfully authenticated'"
-    echo "5. Then run this script again"
-    exit 1
-fi
-
 # Get repo URL from user or environment variable
 REPO_URL="${NETWORK_BOOT_REPO:-}"
 if [ -z "$REPO_URL" ]; then
@@ -69,11 +57,13 @@ if [ -d "$REPO_DIR" ]; then
     mv "$REPO_DIR" "${REPO_DIR}.bak.$(date +%s)"
 fi
 mkdir -p "$REPO_DIR"
+
 if ! sudo -E -u ${REAL_USER} git clone "$REPO_URL" "$REPO_DIR"; then
     echo "Failed to clone repository. Please check:"
     echo "1. The repository URL is correct"
     echo "2. You have access to the repository"
-    echo "3. Your SSH key is properly set up"
+    echo "3. Your SSH key is properly added to GitHub (https://github.com/settings/keys)"
+    echo "4. Test your GitHub SSH access: ssh -T git@github.com"
     exit 1
 fi
 
