@@ -9,8 +9,8 @@ This script helps set up a Raspberry Pi as a network boot server. It handles the
 - The following packages installed:
   - git
   - ansible
-  - nfs-kernel-server
-  - ssh
+
+Note: Additional packages (nfs-kernel-server, docker.io, etc.) will be installed automatically by the Ansible playbook.
 
 ## Usage
 
@@ -21,6 +21,7 @@ curl -O https://raw.githubusercontent.com/seanbrar/pi-tools/main/network-boot/bo
 
 # Option 2: Force latest version (recommended)
 curl -O "https://raw.githubusercontent.com/seanbrar/pi-tools/main/network-boot/bootstrap.sh?$(date +%s)"
+chmod +x bootstrap.sh
 ```
 
 2. Run the script with sudo:
@@ -40,9 +41,15 @@ sudo -E ./bootstrap.sh
 
 The script will:
 1. Set up SSH authentication with GitHub
-2. Clone your private repository
-3. Run the Ansible playbook to complete the setup
+2. Clone your private repository to `/opt/network-boot/repo`
+3. Run the Ansible playbook to:
+   - Install required packages
+   - Configure network settings
+   - Set up NFS and Docker services
+   - Configure the network boot environment
 
 ## Note
 
-Ensure you have at least 10GB of free disk space and that the required ports (2049, 67, 69, 111) are available before running the script.
+- Ensure you have at least 10GB of free disk space
+- The script can be safely re-run if needed
+- All configurations will be stored in `/opt/network-boot`
