@@ -91,7 +91,7 @@ fi
 
 # Setup inventory
 echo "Setting up Ansible inventory..."
-cp ansible/inventory/example ansible/inventory/hosts
+cp "${REPO_DIR}/ansible/inventory/example" "${REPO_DIR}/ansible/inventory/hosts"
 
 # Get IP address
 IP_ADDR=$(ip -4 addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
@@ -103,10 +103,10 @@ fi
 ANSIBLE_USER="${REAL_USER}"
 
 # Update inventory file with actual values
-sed -i "s/192.168.2.X/$IP_ADDR/" ansible/inventory/hosts
-sed -i "s/network-boot-01.example/$(hostname)/" ansible/inventory/hosts
-sed -i "s/your_username/$ANSIBLE_USER/" ansible/inventory/hosts
-sed -i "s|~/.ssh/ansible_local|${SSH_KEY_FILE}|" ansible/inventory/hosts
+sed -i "s/192.168.2.X/$IP_ADDR/" "${REPO_DIR}/ansible/inventory/hosts"
+sed -i "s/network-boot-01.example/$(hostname)/" "${REPO_DIR}/ansible/inventory/hosts"
+sed -i "s/your_username/$ANSIBLE_USER/" "${REPO_DIR}/ansible/inventory/hosts"
+sed -i "s|~/.ssh/ansible_local|${SSH_KEY_FILE}|" "${REPO_DIR}/ansible/inventory/hosts"
 
 # Setup Ansible temp directory
 ANSIBLE_TMP="/tmp/.ansible-${REAL_USER}"
