@@ -77,17 +77,30 @@ SSH_KEY_FILE="${REAL_HOME}/.ssh/ansible_local"
 if [ ! -f "${SSH_KEY_FILE}" ]; then
     echo "Generating SSH key for Ansible..."
     sudo -u ${REAL_USER} ssh-keygen -t ed25519 -f "${SSH_KEY_FILE}" -N "" -C "ansible-local-${HOSTNAME}"
+    
+    # Clear existing ansible key entries from authorized_keys
+    if [ -f "${REAL_HOME}/.ssh/authorized_keys" ]; then
+        sudo -u ${REAL_USER} sed -i '/ansible-local-/d' "${REAL_HOME}/.ssh/authorized_keys"
+    fi
+    
+    # Add new key
     sudo -u ${REAL_USER} cat "${SSH_KEY_FILE}.pub" >> "${REAL_HOME}/.ssh/authorized_keys"
     chmod 600 "${REAL_HOME}/.ssh/authorized_keys"
+    chmod 600 "${SSH_KEY_FILE}"
+    chmod 644 "${SSH_KEY_FILE}.pub"
 fi
 
-# Start SSH agent and add key
+# Ensure SSH agent is using the correct key
+eval $(ssh-agent -k 2>/dev/null || true)
 eval $(ssh-agent)
 ssh-add "${SSH_KEY_FILE}"
 
-# Test SSH connection
+# Test SSH connection with verbose output
 echo "Testing SSH connection..."
-ssh -i "${SSH_KEY_FILE}" -o StrictHostKeyChecking=no ${REAL_USER}@localhost echo "SSH key authentication successful"
+if ! ssh -i "${SSH_KEY_FILE}" -o StrictHostKeyChecking=no ${REAL_USER}@localhost echo "SSH key authentication successful"; then
+    echo "SSH key authentication failed. Please check the SSH configuration."
+    exit 1
+fi
 
 # Configure passwordless sudo for the user
 SUDOERS_FILE="/etc/sudoers.d/ansible-user"
@@ -125,6 +138,31 @@ chmod -R 700 "${ANSIBLE_TMP}"
 # Set Ansible temp directory environment variables
 export ANSIBLE_REMOTE_TMP="/tmp/.ansible-${REAL_USER}/tmp"
 export ANSIBLE_LOCAL_TMP="/tmp/.ansible-${REAL_USER}/tmp"
+
+# Debug SSH setup
+echo "=== Debug SSH Setup ==="
+echo "Contents of authorized_keys:"
+cat "${REAL_HOME}/.ssh/authorized_keys"
+echo ""
+echo "SSH key permissions:"
+ls -la "${REAL_HOME}/.ssh/ansible_local"*
+echo ""
+echo "Testing direct SSH with key:"
+ssh -v -i "${SSH_KEY_FILE}" ${REAL_USER}@${IP_ADDR} echo "Test connection"
+echo ""
+echo "=== Inventory File Contents ==="
+cat "${REPO_DIR}/ansible/inventory/hosts"
+echo "=== End Debug ==="
+
+# Test connection to actual IP before running Ansible
+echo "Testing connection to ${IP_ADDR}..."
+if ! ssh -i "${SSH_KEY_FILE}" -o StrictHostKeyChecking=no ${REAL_USER}@${IP_ADDR} echo "SSH key authentication successful"; then
+    echo "SSH key authentication to ${IP_ADDR} failed. Please check:"
+    echo "1. The IP address is correct"
+    echo "2. SSH service is running"
+    echo "3. SSH key authentication is properly configured"
+    exit 1
+fi
 
 # Run the playbook
 echo "Running Ansible playbook..."
