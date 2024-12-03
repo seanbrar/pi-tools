@@ -20,7 +20,81 @@ mkdir -p "${REAL_HOME}/.ssh"
 chmod 700 "${REAL_HOME}/.ssh"
 chown ${REAL_USER}:${REAL_USER} "${REAL_HOME}/.ssh"
 
-# Clone the repo
+# Function to test GitHub SSH connection with enhanced logging
+test_github_ssh() {
+    sudo -H -u ${REAL_USER} ssh -i ${REAL_HOME}/.ssh/id_ed25519 -T -o StrictHostKeyChecking=accept-new git@github.com 2>&1 | tee /tmp/ssh_test_output.log
+    grep -q "successfully authenticated" /tmp/ssh_test_output.log
+}
+
+# Check for existing SSH keys
+if [ ! -f "${REAL_HOME}/.ssh/id_ed25519" ] && [ ! -f "${REAL_HOME}/.ssh/id_rsa" ]; then
+    echo "No SSH keys found. Generating new Ed25519 key..."
+    
+    # Generate key as the real user
+    sudo -u ${REAL_USER} ssh-keygen -t ed25519 -C "${REAL_USER}@$(hostname)" -N "" -f "${REAL_HOME}/.ssh/id_ed25519"
+    
+    # Set correct permissions
+    chmod 600 "${REAL_HOME}/.ssh/id_ed25519"
+    chmod 644 "${REAL_HOME}/.ssh/id_ed25519.pub"
+    chown ${REAL_USER}:${REAL_USER} "${REAL_HOME}/.ssh/id_ed25519"*
+    
+    # Display instructions
+    echo -e "\n=== GitHub SSH Key Setup Required ==="
+    echo -e "1. Copy this public key (select and copy the entire line below):\n"
+    cat "${REAL_HOME}/.ssh/id_ed25519.pub"
+    echo -e "\n2. Go to: https://github.com/settings/ssh/new"
+    echo -e "3. Give it a memorable title (e.g., $(hostname))"
+    echo -e "4. Paste the key into the 'Key' field"
+    echo -e "5. Click 'Add SSH key'\n"
+    
+    while true; do
+        read -p "Press Enter after adding the key to GitHub (or 'q' to quit)..." response
+        
+        if [ "$response" == "q" ]; then
+            echo "Setup aborted."
+            exit 1
+        fi
+        
+        echo "Testing GitHub SSH connection..."
+        if test_github_ssh; then
+            echo "SSH connection successful!"
+            break
+        else
+            echo "SSH connection failed. Please verify that you added the key correctly."
+            echo "Would you like to:"
+            echo "1. Show the public key again"
+            echo "2. Retry the connection test"
+            echo "3. Quit"
+            read -p "Enter your choice (1-3): " choice
+            
+            case $choice in
+                1) cat "${REAL_HOME}/.ssh/id_ed25519.pub";;
+                2) continue;;
+                3) echo "Setup aborted."; exit 1;;
+                *) echo "Invalid choice. Retrying connection test...";;
+            esac
+        fi
+    done
+else
+    echo "Existing SSH key found. Testing GitHub connection..."
+    
+    # Start SSH agent and add the key if necessary
+    eval "$(ssh-agent -s)"
+    ssh-add "${REAL_HOME}/.ssh/id_ed25519" || true
+    
+    if ! test_github_ssh; then
+        echo "SSH connection to GitHub failed. Please ensure:"
+        echo "1. Your SSH key is added to GitHub (https://github.com/settings/keys)"
+        echo "2. The SSH agent is running (eval \$(ssh-agent -s))"
+        echo "3. Your key is added to the agent (ssh-add)"
+        # Optionally, display the SSH test output for debugging
+        cat /tmp/ssh_test_output.log
+        exit 1
+    fi
+    echo "SSH connection successful!"
+fi
+
+# Get the repository URL
 REPO_URL="${NETWORK_BOOT_REPO:-}"
 if [ -z "$REPO_URL" ]; then
     read -p "Enter your GitHub repo URL (git@github.com:username/repo.git): " REPO_URL
@@ -33,7 +107,7 @@ if ! echo "$REPO_URL" | grep -qE '^git@github\.com:.+/.+\.git$'; then
     exit 1
 fi
 
-# Clone the repo
+# Prepare the clone directory
 REPO_DIR="/opt/network-boot/repo"
 echo "Cloning repository to ${REPO_DIR}..."
 if [ -d "$REPO_DIR" ]; then
