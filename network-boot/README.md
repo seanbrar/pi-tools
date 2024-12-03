@@ -44,7 +44,8 @@ sudo -E ./bootstrap.sh
 3. Follow the prompts to:
    - Add the generated SSH key to your GitHub account
    - Enter your GitHub repository URL (if not set via environment variable)
-   - Enter network configuration (IP address, gateway, netmask)
+   - Confirm or modify the system IP address
+   - Confirm or modify the system hostname
 
 The script will:
 1. Set up SSH authentication with GitHub
