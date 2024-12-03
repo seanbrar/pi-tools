@@ -172,4 +172,4 @@ echo "=== End Inventory File ==="
 # Run the playbook with reduced verbosity
 echo "Running Ansible playbook with local connection..."
 cd "$REPO_DIR"
-sudo -u ${REAL_USER} ansible-playbook -i ansible/inventory/hosts ansible/playbooks/setup-pi.yml -v
+sudo -u ${REAL_USER} ansible-playbook -i ansible/inventory/hosts ansible/playbooks/setup-pi.yml
