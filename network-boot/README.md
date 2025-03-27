@@ -1,6 +1,21 @@
 # Raspberry Pi Network Boot Server Bootstrap
 
-This script helps set up a Raspberry Pi as a network boot server. It handles the initial configuration including SSH keys, network settings, and running the necessary Ansible playbook.
+[![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
+[![Tested on Raspberry Pi 4](https://img.shields.io/badge/tested%20on-Raspberry%20Pi%204-red)](https://www.raspberrypi.com/)
+
+A bootstrap script to configure a Raspberry Pi as a network boot server, handling SSH keys, network settings, and Ansible playbook execution.
+
+## Table of Contents
+
+- [Background](#background)
+- [Prerequisites](#prerequisites)
+- [Install](#install)
+- [Usage](#usage)
+- [Notes](#notes)
+
+## Background
+
+This tool automates the process of setting up a Raspberry Pi as a network boot server. Network booting allows other Raspberry Pi devices to operate without SD cards by loading their operating system from this server over the network.
 
 ## Prerequisites
 
@@ -19,9 +34,9 @@ This script helps set up a Raspberry Pi as a network boot server. It handles the
 
 Note: Additional packages (nfs-kernel-server, docker.io, etc.) will be installed automatically by the Ansible playbook.
 
-## Usage
+## Install
 
-1. Download the bootstrap script:
+Download the bootstrap script:
 ```bash
 # Option 1: Latest version (might be cached)
 curl -O https://raw.githubusercontent.com/seanbrar/pi-tools/main/network-boot/bootstrap.sh
@@ -31,7 +46,9 @@ curl -O "https://raw.githubusercontent.com/seanbrar/pi-tools/main/network-boot/b
 chmod +x bootstrap.sh
 ```
 
-2. Run the script:
+## Usage
+
+Run the script:
 ```bash
 # Option 1: Enter repo URL when prompted
 sudo -E ./bootstrap.sh
@@ -41,7 +58,7 @@ export NETWORK_BOOT_REPO="git@github.com:username/repo.git"
 sudo -E ./bootstrap.sh
 ```
 
-3. Follow the prompts to:
+Follow the prompts to:
    - Add the generated SSH key to your GitHub account
    - Enter your GitHub repository URL (if not set via environment variable)
    - Confirm or modify the system IP address
@@ -56,7 +73,7 @@ The script will:
    - Set up NFS and Docker services
    - Configure the network boot environment
 
-## Note
+## Notes
 
 - Ensure you have at least 10GB of free disk space
 - The script can be safely re-run if needed
